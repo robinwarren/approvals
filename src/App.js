@@ -33,12 +33,16 @@ class App extends React.Component {
         	{
         		permissions: res.data.boards[0].permissions,
         		owner: res.data.boards[0].owner.id,
-        		subscribers: res.data.boards[0].subscribers.map(subscriber => subscriber.id)
         	}
         );
-        console.log(res.data.boards[0].subscribers.map(subscriber => subscriber.id));
       });
-
+		  monday.api('query ($itemIds: [Int]) { items (ids:$itemIds) { subscribers {id} } }', {variables:{itemIds:[res.data.itemId]}}).then(res => {
+        this.setState(
+        	{
+        		subscribers: res.data.items[0].subscribers.map(subscriber => subscriber.id)
+        	}
+        );
+      });
 	  	monday.storage.instance.getItem('approvals' + this.state.context.itemId).then(res => {
 		  	let approvals = JSON.parse(res.data.value);
 		  	this.setState({'approvals': approvals ? approvals : []});
@@ -83,7 +87,6 @@ class App extends React.Component {
 	}
 
   updateApproval = (id, data) => {
-  	console.log(data);
   	if (data.assignee) {
   		//Assignee changed - send notification
   		this.sendNotificationToAssignee(data);
@@ -112,9 +115,9 @@ class App extends React.Component {
   }
 
   userCanAdd() {
-  	return 	this.state.permissions === 'everyone'
-  			||	(this.state.permissions === 'owners' && this.state.current_user && this.state.current_user.id === this.state.owner)
-  			|| (this.state.current_user && this.state.subscribers && this.state.subscribers.includes(this.state.current_user.id));
+  	console.log(this.state.subscribers);
+  	if 			(this.state.permissions === 'everyone') return true;
+  	else 			return (this.state.current_user && this.state.subscribers && this.state.subscribers.includes(this.state.current_user.id));
   }
 
   render() {
